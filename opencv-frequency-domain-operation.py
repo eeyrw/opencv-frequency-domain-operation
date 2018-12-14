@@ -42,7 +42,7 @@ def generateMask(width,height,radius):
     mask = np.zeros((height,width,2),np.float32)
     for x in range(cols):
         for y in range(rows):
-            if (x-crow)**2+(y-crow)**2<=radius*radius:
+            if (x-crow)**2+(y-ccol)**2<=radius*radius:
                 mask[x,y]=(1,1)
             else:
                 mask[x,y]=(0,0)
