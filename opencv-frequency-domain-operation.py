@@ -3,7 +3,6 @@ import cv2
 from matplotlib import pyplot as plt
 
 def generateGaussianMask(width,height,sigma):
-    # create a mask first, center square is 1, remaining all zeros
     crow,ccol = rows//2 , cols//2
     mask = np.zeros((height,width,2),np.float32)
     c1=2*np.pi*sigma*sigma
@@ -17,7 +16,6 @@ def generateGaussianMask(width,height,sigma):
     return mask
 
 def generateSharpenMask(width,height,sigma):
-    # create a mask first, center square is 1, remaining all zeros
     crow,ccol = rows//2 , cols//2
     mask = np.zeros((height,width,2),np.float32)
     c1=2*np.pi*sigma*sigma
@@ -26,7 +24,7 @@ def generateSharpenMask(width,height,sigma):
         for y in range(rows):
             t_x=x-ccol
             t_y=y-crow
-            v=2-np.exp((-t_x**2-t_y**2)/c2)/c1
+            v=1-10*np.exp((-t_x**2-t_y**2)/c2)/c1
             mask[x,y]=(v,v)
     return mask
 
@@ -60,26 +58,54 @@ def dft2d(img):
 img = cv2.imread('fractal.png',0)
 dft_shift,magnitude_spectrum=dft2d(img)
 rows, cols = img.shape
-mask1=generateGaussianMask(cols,rows,5)
-mask2=generateSharpenMask(cols,rows,8)
-mask3=generateMask(cols,rows,100)
-mask1_magnitude= (cv2.magnitude(mask1[:,:,0],mask1[:,:,1]))
-mask2_magnitude= (cv2.magnitude(mask2[:,:,0],mask2[:,:,1]))
-img_back1=applyFilter(dft_shift,mask1)
-img_back2=applyFilter(dft_shift,mask2)
-img_back3=applyFilter(dft_shift,mask3)
+
+mask_r5=generateMask(cols,rows,5)
+mask_r50=generateMask(cols,rows,50)
+mask_r100=generateMask(cols,rows,100)
+mask_blur=generateGaussianMask(cols,rows,10)
+mask_sharpen=generateSharpenMask(cols,rows,50)
+
+mask_r5_magnitude= (cv2.magnitude(mask_r5[:,:,0],mask_r5[:,:,1]))
+mask_r50_magnitude= (cv2.magnitude(mask_r50[:,:,0],mask_r50[:,:,1]))
+mask_r100_magnitude= (cv2.magnitude(mask_r100[:,:,0],mask_r100[:,:,1]))
+mask_blur_magnitude= (cv2.magnitude(mask_blur[:,:,0],mask_blur[:,:,1]))
+mask_sharpen_magnitude= (cv2.magnitude(mask_sharpen[:,:,0],mask_sharpen[:,:,1]))
+
+img_r5=applyFilter(dft_shift,mask_r5)
+img_r50=applyFilter(dft_shift,mask_r50)
+img_r100=applyFilter(dft_shift,mask_r100)
+img_blur=applyFilter(dft_shift,mask_blur)
+img_sharpen=applyFilter(dft_shift,mask_sharpen)
+
 plt.subplot(241),plt.imshow(img, cmap = 'gray')
 plt.title('Input Image'), plt.xticks([]), plt.yticks([])
 plt.subplot(242),plt.imshow(magnitude_spectrum, cmap = 'gray')
 plt.title('Magnitude Spectrum'), plt.xticks([]), plt.yticks([])
-plt.subplot(243),plt.imshow(img_back1, cmap = 'gray')
-plt.title('Filtered Image1'), plt.xticks([]), plt.yticks([])
-plt.subplot(244),plt.imshow(img_back2, cmap = 'gray')
-plt.title('Filtered Image2'), plt.xticks([]), plt.yticks([])
-plt.subplot(245),plt.imshow(img_back3, cmap = 'gray')
-plt.title('Filtered Image3'), plt.xticks([]), plt.yticks([])
-plt.subplot(246),plt.imshow(mask1_magnitude, cmap = 'gray')
-plt.title('Mask Image1'), plt.xticks([]), plt.yticks([])
-plt.subplot(247),plt.imshow(mask2_magnitude, cmap = 'gray')
-plt.title('Mask Image2'), plt.xticks([]), plt.yticks([])
+plt.subplot(243),plt.imshow(img_r5, cmap = 'gray')
+plt.title('ILPF R=5 Filtered Image'), plt.xticks([]), plt.yticks([])
+plt.subplot(244),plt.imshow(img_r50, cmap = 'gray')
+plt.title('ILPF R=50 Filtered Image'), plt.xticks([]), plt.yticks([])
+plt.subplot(245),plt.imshow(img_r100, cmap = 'gray')
+plt.title('ILPF R=100 Filtered Image'), plt.xticks([]), plt.yticks([])
+
+plt.subplot(246),plt.imshow(mask_r5_magnitude, cmap = 'gray')
+plt.title('ILPF R=5'), plt.xticks([]), plt.yticks([])
+plt.subplot(247),plt.imshow(mask_r50_magnitude, cmap = 'gray')
+plt.title('ILPF R=50'), plt.xticks([]), plt.yticks([])
+plt.subplot(248),plt.imshow(mask_r100_magnitude, cmap = 'gray')
+plt.title('ILPF R=100'), plt.xticks([]), plt.yticks([])
+
+plt.figure()
+plt.subplot(241),plt.imshow(img, cmap = 'gray')
+plt.title('Input Image'), plt.xticks([]), plt.yticks([])
+plt.subplot(242),plt.imshow(magnitude_spectrum, cmap = 'gray')
+plt.title('Magnitude Spectrum'), plt.xticks([]), plt.yticks([])
+plt.subplot(243),plt.imshow(mask_blur_magnitude, cmap = 'gray')
+plt.title('GLPF Sigma=10'), plt.xticks([]), plt.yticks([])
+plt.subplot(244),plt.imshow(img_blur, cmap = 'gray')
+plt.title('GLPF Sigma=10 Filtered Image'), plt.xticks([]), plt.yticks([])
+plt.subplot(245),plt.imshow(mask_sharpen_magnitude, cmap = 'gray')
+plt.title('Sharpen mask'), plt.xticks([]), plt.yticks([])
+plt.subplot(246),plt.imshow(img_sharpen, cmap = 'gray')
+plt.title('Sharpened Image'), plt.xticks([]), plt.yticks([])
 plt.show()
